@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#F7F5F1" />
+  <title>Wim-maatje</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+
+    <header class="topbar">
+      <div>
+        <h1 class="apptitle">Wim-maatje</h1>
+        <p class="greeting" id="greeting"></p>
+      </div>
+      <button class="iconbtn" id="btn-settings" title="Instellingen" aria-label="Instellingen">&#9881;</button>
+    </header>
+
+    <main id="main">
+
+      <!-- CHAT -->
+      <section class="view" id="view-chat">
+        <div class="support-card hidden" id="support-card">
+          <strong>Even belangrijk.</strong>
+          <p>Als het te zwaar wordt: bel of chat met <a href="https://www.113.nl" target="_blank" rel="noopener">113 Zelfmoordpreventie</a> — bel <a href="tel:113">113</a> of <a href="tel:08000113">0800-0113</a> (gratis, dag en nacht). Of neem contact op met je huisarts of POH-GGZ.</p>
+          <button class="linkbtn" id="support-dismiss">Sluiten</button>
+        </div>
+
+        <div class="messages" id="messages" aria-live="polite"></div>
+
+        <div class="chips" id="chips">
+          <button class="chip" data-msg="Ik ben wakker geworden en kan niet meer slapen.">Ik ben wakker</button>
+          <button class="chip" data-msg="Ik zit vast en kom niet verder.">Ik zit vast</button>
+          <button class="chip" data-msg="Help me dit afronden, ik blijf hangen.">Help me afronden</button>
+          <button class="chip" data-msg="Ik pieker en het maalt door.">Ik pieker</button>
+          <button class="chip" data-msg="Ochtend check-in.">Ochtend check-in</button>
+          <button class="chip" data-msg="Middag reset.">Middag reset</button>
+          <button class="chip" data-msg="Ik wil de avond afsluiten.">Avond afsluiten</button>
+        </div>
+
+        <form class="inputrow" id="chatform">
+          <button type="button" class="iconbtn" id="btn-mic" title="Spreek je bericht in" aria-label="Microfoon">&#127908;</button>
+          <textarea id="input" rows="1" placeholder="Typ of spreek…" autocomplete="off"></textarea>
+          <button type="submit" class="iconbtn primary" id="btn-send" title="Versturen" aria-label="Versturen">&#10148;</button>
+        </form>
+        <p class="hint" id="chat-hint"></p>
+        <div class="row-end">
+          <button class="linkbtn" id="btn-close-session" title="Sluit dit gesprek af en bewaar een korte samenvatting">Gesprek afronden</button>
+        </div>
+      </section>
+
+      <!-- SLAAP -->
+      <section class="view hidden" id="view-sleep">
+        <h2>Slaap</h2>
+        <form class="card form" id="sleepform">
+          <div class="grid2">
+            <label>Datum <input type="date" name="date" /></label>
+            <label>Bedtijd <input type="time" name="bedtime" /></label>
+            <label>Geschatte slaap (uren) <input type="number" name="sleepHours" min="0" max="14" step="0.5" /></label>
+            <label>Opgestaan om <input type="time" name="wakeTime" /></label>
+          </div>
+          <label class="checkline"><input type="checkbox" name="wokeNight" /> Midden in de nacht wakker geweest</label>
+          <label>Notitie <input type="text" name="note" placeholder="bv. om 03:30 wakker, ging malen" /></label>
+          <button type="submit" class="btn">Opslaan</button>
+        </form>
+        <div class="card">
+          <h3>Afgelopen week</h3>
+          <div class="weekbars" id="weekbars"></div>
+        </div>
+      </section>
+
+      <!-- DAG -->
+      <section class="view hidden" id="view-day">
+        <h2>Dagstatus</h2>
+        <form class="card form" id="dayform">
+          <div class="scale-row" data-field="energy"><span>Energie</span><output>–</output></div>
+          <input type="range" name="energy" min="1" max="10" value="5" />
+          <div class="scale-row" data-field="stress"><span>Stress</span><output>–</output></div>
+          <input type="range" name="stress" min="1" max="10" value="5" />
+          <div class="scale-row" data-field="mood"><span>Stemming</span><output>–</output></div>
+          <input type="range" name="mood" min="1" max="10" value="5" />
+          <div class="scale-row" data-field="focus"><span>Focus</span><output>–</output></div>
+          <input type="range" name="focus" min="1" max="10" value="5" />
+          <button type="submit" class="btn">Vandaag opslaan</button>
+        </form>
+        <div class="card">
+          <h3>Laatste dagen</h3>
+          <div id="checkin-list" class="list"></div>
+        </div>
+      </section>
+
+      <!-- DOELEN -->
+      <section class="view hidden" id="view-goals">
+        <h2>Doelen</h2>
+        <form class="card form" id="goalform">
+          <label>Nieuw doel <input type="text" name="title" placeholder="bv. 30 min eerder naar bed" required /></label>
+          <label>Categorie
+            <select name="category">
+              <option value="slaap">Slaap</option>
+              <option value="werk">Werk</option>
+              <option value="zelfzorg">Zelfzorg</option>
+              <option value="emotie">Emotie</option>
+              <option value="algemeen" selected>Algemeen</option>
+            </select>
+          </label>
+          <button type="submit" class="btn">Toevoegen</button>
+        </form>
+        <div id="goal-list" class="list"></div>
+      </section>
+
+      <!-- GESCHIEDENIS -->
+      <section class="view hidden" id="view-history">
+        <h2>Geschiedenis</h2>
+        <div id="session-list" class="list"></div>
+        <div class="card hidden" id="session-detail">
+          <button class="linkbtn" id="btn-back-history">&larr; Terug naar overzicht</button>
+          <h3 id="session-detail-title"></h3>
+          <div class="messages readonly" id="session-detail-messages"></div>
+        </div>
+      </section>
+
+      <!-- INSTELLINGEN -->
+      <section class="view hidden" id="view-settings">
+        <h2>Instellingen</h2>
+        <form class="card form" id="settingsform">
+          <label>Naam <input type="text" name="name" /></label>
+          <label class="checkline"><input type="checkbox" name="tts" /> Voorlezen (TTS) standaard aan</label>
+          <label class="checkline"><input type="checkbox" name="stt" /> Spraakinvoer (microfoon) gebruiken</label>
+          <p class="hint" id="speech-status"></p>
+          <label>Weergave
+            <select name="darkMode">
+              <option value="auto">Automatisch</option>
+              <option value="licht">Licht</option>
+              <option value="donker">Donker</option>
+            </select>
+          </label>
+          <label>Korte voorkeuren <textarea name="preferences" rows="2" placeholder="bv. Kort en nuchter."></textarea></label>
+          <button type="submit" class="btn">Opslaan</button>
+        </form>
+        <div class="card">
+          <h3>Bronnen</h3>
+          <p class="hint">Wim-maatje baseert gezondheidsadvies alleen op deze bronnen.</p>
+          <ul id="source-list" class="sourcelist"></ul>
+        </div>
+      </section>
+
+    </main>
+
+    <nav class="tabbar" id="tabbar">
+      <button class="tab active" data-view="chat">Chat</button>
+      <button class="tab" data-view="sleep">Slaap</button>
+      <button class="tab" data-view="day">Dag</button>
+      <button class="tab" data-view="goals">Doelen</button>
+      <button class="tab" data-view="history">Historie</button>
+    </nav>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

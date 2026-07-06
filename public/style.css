@@ -1,0 +1,471 @@
+/* Wim-maatje — rustige, volwassen interface.
+   Warm licht palet, gedempte groene accentkleur, veel witruimte. */
+
+:root {
+  --bg: #f7f5f1;
+  --surface: #ffffff;
+  --surface-2: #efece5;
+  --text: #2b2a26;
+  --muted: #6e6a61;
+  --border: #e3dfd5;
+  --accent: #4a6151;
+  --accent-soft: #e7ece7;
+  --danger: #8a4b3c;
+  --shadow: 0 1px 3px rgba(40, 38, 32, 0.08);
+  --radius: 14px;
+}
+
+[data-theme="donker"] {
+  --bg: #1d1c19;
+  --surface: #262521;
+  --surface-2: #2f2d28;
+  --text: #ebe8e1;
+  --muted: #a5a094;
+  --border: #3a3831;
+  --accent: #8fae94;
+  --accent-soft: #313b33;
+  --danger: #c98a76;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme="auto"] {
+    --bg: #1d1c19;
+    --surface: #262521;
+    --surface-2: #2f2d28;
+    --text: #ebe8e1;
+    --muted: #a5a094;
+    --border: #3a3831;
+    --accent: #8fae94;
+    --accent-soft: #313b33;
+    --danger: #c98a76;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  max-width: 720px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px;
+}
+
+/* ---------- Topbar ---------- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 2px 10px;
+}
+
+.apptitle {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+.greeting {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* ---------- Views ---------- */
+
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding-bottom: 12px;
+}
+
+.view h2 {
+  font-family: Georgia, serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 8px 2px 12px;
+}
+
+.view h3 {
+  font-size: 0.95rem;
+  margin: 0 0 10px;
+}
+
+.hidden { display: none !important; }
+
+/* ---------- Chat ---------- */
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 2px;
+  min-height: 200px;
+}
+
+.msg {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.msg.user {
+  align-self: flex-end;
+  background: var(--accent);
+  color: #fdfdfb;
+  border-bottom-right-radius: 4px;
+}
+
+.msg.assistant {
+  align-self: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  border-bottom-left-radius: 4px;
+}
+
+.msg .speak {
+  display: inline-block;
+  margin-top: 6px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0;
+}
+
+.msg .speak:hover { color: var(--accent); }
+
+.msg.pending { color: var(--muted); font-style: italic; }
+
+.welcome {
+  align-self: center;
+  color: var(--muted);
+  text-align: center;
+  font-size: 0.9rem;
+  margin-top: 32px;
+  max-width: 380px;
+}
+
+/* ---------- Chips ---------- */
+
+.chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 2px;
+  scrollbar-width: none;
+}
+.chips::-webkit-scrollbar { display: none; }
+
+.chip {
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.chip:hover { background: var(--accent-soft); border-color: var(--accent); }
+
+/* ---------- Invoer ---------- */
+
+.inputrow {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  padding: 6px 0 2px;
+}
+
+textarea, input, select {
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 12px;
+  width: 100%;
+}
+
+textarea { resize: none; }
+
+textarea:focus, input:focus, select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+#input { max-height: 120px; }
+
+.iconbtn {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 1.05rem;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.iconbtn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fdfdfb;
+}
+
+.iconbtn.recording {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.78rem;
+  margin: 4px 2px;
+  min-height: 1em;
+}
+
+.row-end { display: flex; justify-content: flex-end; }
+
+.linkbtn {
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 4px 2px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.linkbtn:hover { color: var(--accent); }
+
+/* ---------- Support card ---------- */
+
+.support-card {
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin: 8px 0;
+  font-size: 0.9rem;
+}
+.support-card p { margin: 6px 0; }
+.support-card a { color: var(--accent); }
+
+/* ---------- Kaarten & formulieren ---------- */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.form label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.form label input, .form label select, .form label textarea {
+  margin-top: 4px;
+}
+
+.checkline {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  color: var(--text) !important;
+}
+.checkline input { width: auto !important; margin: 0 !important; }
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 12px;
+}
+
+.btn {
+  background: var(--accent);
+  color: #fdfdfb;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 18px;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.btn:hover { opacity: 0.92; }
+
+/* ---------- Sliders ---------- */
+
+.scale-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 8px;
+}
+.scale-row output { color: var(--accent); font-weight: 600; }
+
+input[type="range"] {
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  accent-color: var(--accent);
+}
+
+/* ---------- Lijsten ---------- */
+
+.list { display: flex; flex-direction: column; gap: 10px; }
+
+.list-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-size: 0.9rem;
+}
+
+.list-item .title { font-weight: 600; }
+.list-item .meta { color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
+.list-item .actions { margin-top: 8px; display: flex; gap: 12px; flex-wrap: wrap; }
+.list-item.clickable { cursor: pointer; }
+.list-item.clickable:hover { border-color: var(--accent); }
+
+.badge {
+  display: inline-block;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 1px 10px;
+  font-size: 0.72rem;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* ---------- Weekoverzicht slaap ---------- */
+
+.weekbars {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 120px;
+}
+
+.weekbar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  font-size: 0.7rem;
+  color: var(--muted);
+  gap: 4px;
+}
+
+.weekbar .bar {
+  width: 100%;
+  max-width: 34px;
+  background: var(--accent);
+  border-radius: 6px 6px 2px 2px;
+  min-height: 2px;
+  opacity: 0.85;
+}
+
+.weekbar .bar.broken { opacity: 0.45; }
+
+.weekbar .val { color: var(--text); font-weight: 600; }
+
+/* ---------- Bronnen ---------- */
+
+.sourcelist {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.85rem;
+}
+.sourcelist li { margin-bottom: 6px; }
+.sourcelist a { color: var(--accent); }
+.sourcelist .note { color: var(--muted); }
+
+/* ---------- Tabbar ---------- */
+
+.tabbar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  gap: 4px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  padding: 8px 0 max(10px, env(safe-area-inset-bottom));
+}
+
+.tab {
+  flex: 1;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 8px 0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.tab.active {
+  color: var(--accent);
+  background: var(--accent-soft);
+  font-weight: 600;
+}
+
+.messages.readonly { max-height: 50vh; }
+
+@media (max-width: 480px) {
+  .grid2 { grid-template-columns: 1fr; }
+  .msg { max-width: 92%; }
+}

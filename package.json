@@ -1,0 +1,20 @@
+{
+  "name": "wim-maatje",
+  "version": "1.0.0",
+  "description": "Wim-maatje — persoonlijk regulatie- en structuurmaatje voor slaap, stress, focus en zelfzorg",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "license": "ISC",
+  "private": true
+}
