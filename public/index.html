@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#F7F5F1" />
   <title>Wim-maatje</title>
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/icon.svg" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Wim-maatje" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -19,6 +24,23 @@
     </header>
 
     <main id="main">
+
+      <!-- BRIEFING -->
+      <section class="view hidden" id="view-briefing">
+        <h2>Ochtendbriefing</h2>
+        <div class="card">
+          <div id="briefing-body" class="briefing-body">
+            <p class="hint">Briefing wordt geladen…</p>
+          </div>
+          <div class="actions">
+            <button class="linkbtn" id="btn-briefing-refresh">Ververs</button>
+            <span class="hint" id="briefing-meta"></span>
+          </div>
+        </div>
+        <div class="card" id="briefing-connect-hint">
+          <p class="hint">Koppel je agenda in de instellingen om afspraken in je briefing te zien.</p>
+        </div>
+      </section>
 
       <!-- CHAT -->
       <section class="view" id="view-chat">
@@ -179,8 +201,28 @@
             </select>
           </label>
           <label>Korte voorkeuren <textarea name="preferences" rows="2" placeholder="bv. Kort en nuchter."></textarea></label>
+          <label class="checkline"><input type="checkbox" name="briefingEnabled" /> Ochtendbriefing aan</label>
+          <label>Tijd van de ochtendbriefing <input type="time" name="briefingTime" /></label>
           <button type="submit" class="btn">Opslaan</button>
         </form>
+
+        <div class="card">
+          <h3>Agenda</h3>
+          <p class="hint" id="agenda-status">Laden…</p>
+          <div id="agenda-actions" class="actions"></div>
+          <div id="agenda-calendars"></div>
+        </div>
+
+        <div class="card">
+          <h3>Meldingen op je telefoon</h3>
+          <p class="hint">Installeer Wim-maatje op je startscherm en zet meldingen aan om 's ochtends een pushmelding te krijgen. De melding vuurt alleen als de server op dat moment draait.</p>
+          <p class="hint" id="push-status">Laden…</p>
+          <div class="actions">
+            <button class="btn" id="btn-push-enable">Meldingen aanzetten</button>
+            <button class="linkbtn" id="btn-push-test">Testmelding</button>
+          </div>
+        </div>
+
         <div class="card">
           <h3>Bronnen</h3>
           <p class="hint">Wim-maatje baseert gezondheidsadvies alleen op deze bronnen.</p>
@@ -191,6 +233,7 @@
     </main>
 
     <nav class="tabbar" id="tabbar">
+      <button class="tab" data-view="briefing">Vandaag</button>
       <button class="tab active" data-view="chat">Chat</button>
       <button class="tab" data-view="sleep">Slaap</button>
       <button class="tab" data-view="day">Dag</button>

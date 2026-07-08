@@ -14,7 +14,9 @@ const EMPTY_DB = {
     tts: false,
     stt: true,
     darkMode: 'auto', // 'auto' | 'licht' | 'donker'
-    preferences: 'Kort en nuchter. Geen zweverigheid.'
+    preferences: 'Kort en nuchter. Geen zweverigheid.',
+    briefingTime: '08:00',  // HH:MM, moment van de ochtendbriefing
+    briefingEnabled: true
   },
   sessions: [],       // {id, date, startedAt, closedAt, summary}
   messages: [],       // {id, sessionId, role, content, ts}
@@ -22,7 +24,16 @@ const EMPTY_DB = {
   memory_items: [],   // {id, date, text, sessionId}
   sleep_logs: [],     // {id, date, bedtime, sleepHours, wokeNight, wakeTime, note}
   daily_checkins: [], // {id, date, energy, stress, mood, focus}
-  coping_episodes: [] // {id, ts, date, urgeBefore, urgeAfter, emotion, trigger, intervention, outcome, relapse, note}
+  coping_episodes: [], // {id, ts, date, urgeBefore, urgeAfter, emotion, trigger, intervention, outcome, relapse, note}
+  google: {           // Google Calendar-koppeling (één account)
+    tokens: null,     // {access_token, refresh_token, expiry, scope}
+    email: null,      // gekoppeld account (alleen ter herkenning)
+    calendars: []     // [{id, summary, selected}]
+  },
+  push_subscriptions: [], // Web-push subscriptions van de telefoon(s)
+  vapid: null,        // {publicKey, privateKey} — één keer gegenereerd
+  briefings: [],      // {id, date, generatedAt, text, items}
+  briefing_state: { lastRunDate: null } // borgt: max één automatische briefing per dag
 };
 
 let db = null;
