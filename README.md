@@ -7,7 +7,7 @@ Een persoonlijke, rustige, evidence-aware webapp die Wim helpt met slaap, stress
 ```bash
 cd wim-maatje
 npm install
-cp .env.example .env     # vul ANTHROPIC_API_KEY in
+cp .env.example .env     # vul OPENAI_API_KEY in
 npm start                # → http://localhost:3100
 ```
 
@@ -15,7 +15,7 @@ Zonder API-key start de app gewoon; alleen de chat geeft dan een nette melding. 
 
 ## Wat zit erin (MVP)
 
-- **Chat** met Wim-maatje (Claude API), quick chips voor de vaste flows: nacht/wakker, ochtend check-in, middag reset, avond afsluiten
+- **Chat** met Wim-maatje (OpenAI API), quick chips voor de vaste flows: nacht/wakker, ochtend check-in, middag reset, avond afsluiten
 - **Spraak**: microfoon (Web Speech API, nl-NL) en voorlezen per bericht (TTS), met nette fallback als de browser het niet ondersteunt
 - **Slaaplog**: bedtijd, geschatte slaap, nachtelijk wakker, opstatijd, notitie + weekoverzicht
 - **Dagstatus**: energie, stress, stemming, focus (1–10) per dag
@@ -31,7 +31,7 @@ Zonder API-key start de app gewoon; alleen de chat geeft dan een nette melding. 
 wim-maatje/
 ├── server.js            # Express-server + API-routes
 ├── src/
-│   ├── claude.js        # Claude API: chatantwoord + sessiesamenvatting (structured output)
+│   ├── openai.js        # OpenAI API: chatantwoord + sessiesamenvatting (structured output)
 │   ├── systemPrompt.js  # Vaste system prompt (gedragsregels Wim-maatje)
 │   ├── safety.js        # Safety-detectie (acuut / verhoogd)
 │   ├── sources.js       # Goedgekeurde bronnen
@@ -57,7 +57,7 @@ wim-maatje/
 
 ### Contextopbouw (compact, niet de ruwe historie)
 
-Per chatbeurt krijgt Claude: de vaste system prompt (gecachet) + een dynamisch blok met naam, moment van de dag, actieve doelen, laatste ~10 memory items, samenvatting van de vorige sessie en de laatste slaaplog + de laatste 20 berichten van de huidige sessie.
+Per chatbeurt krijgt het model: de vaste system prompt (gecachet) + een dynamisch blok met naam, moment van de dag, actieve doelen, laatste ~10 memory items, samenvatting van de vorige sessie en de laatste slaaplog + de laatste 20 berichten van de huidige sessie.
 
 ## Versie 2 — suggesties
 

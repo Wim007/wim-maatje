@@ -5,7 +5,7 @@ const express = require('express');
 
 const { load, save, id, today } = require('./src/store');
 const { assess } = require('./src/safety');
-const { chatReply, summarizeSession } = require('./src/claude');
+const { chatReply, summarizeSession } = require('./src/openai');
 const { SOURCES } = require('./src/sources');
 
 const app = express();
@@ -219,7 +219,7 @@ app.get('/api/sources', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Wim-maatje draait op http://localhost:${PORT}`);
-  if (!process.env.ANTHROPIC_API_KEY) {
-    console.warn('Let op: geen ANTHROPIC_API_KEY gevonden — chat werkt pas na het instellen van de key in .env');
+  if (!process.env.OPENAI_API_KEY) {
+    console.warn('Let op: geen OPENAI_API_KEY gevonden — chat werkt pas na het instellen van de key in .env');
   }
 });

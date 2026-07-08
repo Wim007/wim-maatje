@@ -1,16 +1,16 @@
-// Claude API-laag: chatantwoord en sessiesamenvatting.
+// OpenAI API-laag: chatantwoord en sessiesamenvatting.
 
-const Anthropic = require('@anthropic-ai/sdk');
+const OpenAI = require('openai');
 const { SYSTEM_PROMPT } = require('./systemPrompt');
 const { SAFETY_INSTRUCTION } = require('./safety');
 
-const MODEL = process.env.CLAUDE_MODEL || 'claude-opus-4-8';
+const MODEL = process.env.OPENAI_MODEL || 'gpt-4o';
 const MAX_HISTORY = 20; // recente berichten van de huidige sessie
 
 let client = null;
 function getClient() {
-  if (!process.env.ANTHROPIC_API_KEY) return null;
-  if (!client) client = new Anthropic();
+  if (!process.env.OPENAI_API_KEY) return null;
+  if (!client) client = new OpenAI();
   return client;
 }
 
@@ -64,9 +64,9 @@ function buildContextBlock(db, safetyLevel) {
 }
 
 async function chatReply({ db, sessionMessages, safetyLevel }) {
-  const anthropic = getClient();
-  if (!anthropic) {
-    const err = new Error('Geen ANTHROPIC_API_KEY ingesteld. Zet de key in .env en herstart de server.');
+  const openai = getClient();
+  if (!openai) {
+    const err = new Error('Geen OPENAI_API_KEY ingesteld. Zet de key in .env en herstart de server.');
     err.code = 'NO_API_KEY';
     throw err;
   }
@@ -76,26 +76,22 @@ async function chatReply({ db, sessionMessages, safetyLevel }) {
     content: m.content
   }));
 
-  const response = await anthropic.messages.create({
+  const response = await openai.chat.completions.create({
     model: MODEL,
-    max_tokens: 1024,
-    thinking: { type: 'adaptive' },
-    system: [
-      { type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },
-      { type: 'text', text: buildContextBlock(db, safetyLevel) }
-    ],
-    messages: history
+    max_completion_tokens: 1024,
+    messages: [
+      // Vaste prompt eerst: OpenAI's automatische prompt caching hergebruikt de stabiele prefix
+      { role: 'system', content: SYSTEM_PROMPT + '\n\n' + buildContextBlock(db, safetyLevel) },
+      ...history
+    ]
   });
 
-  if (response.stop_reason === 'refusal') {
+  const choice = response.choices[0];
+  if (choice.message.refusal || choice.finish_reason === 'content_filter') {
     return 'Daar kan ik nu geen goed antwoord op geven. Laten we het bij het moment houden: wat heb je nu het meest nodig?';
   }
 
-  return response.content
-    .filter((b) => b.type === 'text')
-    .map((b) => b.text)
-    .join('\n')
-    .trim();
+  return (choice.message.content || '').trim();
 }
 
 // Sessie afsluiten: samenvatting + geheugenpunten via structured output.
@@ -118,17 +114,20 @@ const SUMMARY_SCHEMA = {
 };
 
 async function summarizeSession(sessionMessages) {
-  const anthropic = getClient();
-  if (!anthropic) return null;
+  const openai = getClient();
+  if (!openai) return null;
 
   const transcript = sessionMessages
     .map((m) => `${m.role === 'user' ? 'Wim' : 'Wim-maatje'}: ${m.content}`)
     .join('\n');
 
-  const response = await anthropic.messages.create({
+  const response = await openai.chat.completions.create({
     model: MODEL,
-    max_tokens: 1024,
-    output_config: { format: { type: 'json_schema', schema: SUMMARY_SCHEMA } },
+    max_completion_tokens: 1024,
+    response_format: {
+      type: 'json_schema',
+      json_schema: { name: 'sessie_samenvatting', strict: true, schema: SUMMARY_SCHEMA }
+    },
     messages: [
       {
         role: 'user',
@@ -139,14 +138,11 @@ async function summarizeSession(sessionMessages) {
     ]
   });
 
-  if (response.stop_reason === 'refusal') return null;
+  const choice = response.choices[0];
+  if (choice.message.refusal) return null;
 
-  const text = response.content
-    .filter((b) => b.type === 'text')
-    .map((b) => b.text)
-    .join('');
   try {
-    return JSON.parse(text);
+    return JSON.parse(choice.message.content || '');
   } catch {
     return null;
   }
