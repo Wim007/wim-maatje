@@ -48,6 +48,7 @@ function showView(name) {
   $$('.view').forEach((v) => v.classList.add('hidden'));
   $(`#view-${name}`).classList.remove('hidden');
   $$('.tab').forEach((t) => t.classList.toggle('active', t.dataset.view === name));
+  if (name === 'briefing') loadBriefing();
   if (name === 'sleep') loadSleep();
   if (name === 'day') loadCheckins();
   if (name === 'coping') loadCoping();
@@ -65,6 +66,8 @@ $('#btn-settings').addEventListener('click', () => {
   $$('.view').forEach((v) => v.classList.add('hidden'));
   $('#view-settings').classList.remove('hidden');
   loadSources();
+  loadAgenda();
+  loadPushStatus();
 });
 
 // ---------- Chat ----------
@@ -354,6 +357,168 @@ $('#dayform').addEventListener('submit', async (e) => {
   loadCheckins();
 });
 
+// ---------- Ochtendbriefing ----------
+
+async function loadBriefing() {
+  const body = $('#briefing-body');
+  body.innerHTML = '<p class="hint">Briefing wordt geladen…</p>';
+  try {
+    const { briefing } = await api('/briefing/today');
+    renderBriefing(briefing);
+  } catch {
+    body.innerHTML = '<p class="hint">Briefing kon niet geladen worden.</p>';
+  }
+  // Koppel-hint alleen tonen als agenda niet gekoppeld is.
+  try {
+    const status = await api('/google/status');
+    $('#briefing-connect-hint').classList.toggle('hidden', status.connected);
+  } catch {}
+}
+
+function renderBriefing(briefing) {
+  const body = $('#briefing-body');
+  body.innerHTML = '';
+  const pre = document.createElement('div');
+  pre.className = 'briefing-text';
+  pre.textContent = briefing.text;
+  body.appendChild(pre);
+  const gen = new Date(briefing.generatedAt);
+  $('#briefing-meta').textContent = `Bijgewerkt ${gen.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}`;
+}
+
+$('#btn-briefing-refresh').addEventListener('click', async () => {
+  $('#briefing-body').innerHTML = '<p class="hint">Verversen…</p>';
+  try {
+    const { briefing } = await api('/briefing/generate', { method: 'POST' });
+    renderBriefing(briefing);
+  } catch {
+    $('#briefing-body').innerHTML = '<p class="hint">Verversen lukte niet.</p>';
+  }
+});
+
+// ---------- Agenda-koppeling ----------
+
+async function loadAgenda() {
+  const statusEl = $('#agenda-status');
+  const actions = $('#agenda-actions');
+  const calBox = $('#agenda-calendars');
+  actions.innerHTML = '';
+  calBox.innerHTML = '';
+  let status;
+  try {
+    status = await api('/google/status');
+  } catch {
+    statusEl.textContent = 'Status onbekend.';
+    return;
+  }
+
+  if (!status.configured) {
+    statusEl.textContent = 'Google-koppeling is nog niet ingesteld (GOOGLE_CLIENT_ID/SECRET in .env). Zie de README.';
+    return;
+  }
+
+  if (status.connected) {
+    statusEl.textContent = `Gekoppeld${status.email ? ` (${status.email})` : ''}.`;
+    actions.append(
+      linkBtn('Ontkoppelen', async () => {
+        await api('/google/disconnect', { method: 'POST' });
+        loadAgenda();
+      })
+    );
+    // Agenda's aan/uit
+    (status.calendars || []).forEach((c) => {
+      const label = document.createElement('label');
+      label.className = 'checkline';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = c.selected;
+      cb.dataset.id = c.id;
+      label.append(cb, document.createTextNode(' ' + (c.summary || c.id)));
+      calBox.appendChild(label);
+    });
+    if ((status.calendars || []).length) {
+      const saveBtn = document.createElement('button');
+      saveBtn.className = 'btn';
+      saveBtn.textContent = 'Agenda-keuze opslaan';
+      saveBtn.addEventListener('click', async () => {
+        const selected = [...calBox.querySelectorAll('input:checked')].map((cb) => cb.dataset.id);
+        await api('/google/calendars', { method: 'PUT', body: { selected } });
+        saveBtn.textContent = 'Opgeslagen ✓';
+        setTimeout(() => (saveBtn.textContent = 'Agenda-keuze opslaan'), 1500);
+      });
+      calBox.appendChild(saveBtn);
+    }
+  } else {
+    statusEl.textContent = 'Niet gekoppeld.';
+    const btn = document.createElement('button');
+    btn.className = 'btn';
+    btn.textContent = 'Agenda koppelen';
+    btn.addEventListener('click', async () => {
+      try {
+        const { url } = await api('/google/connect');
+        window.location.href = url;
+      } catch (err) {
+        statusEl.textContent = err.message || 'Koppelen lukte niet.';
+      }
+    });
+    actions.appendChild(btn);
+  }
+}
+
+// ---------- Pushmeldingen ----------
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+}
+
+async function loadPushStatus() {
+  const el = $('#push-status');
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    el.textContent = 'Deze browser ondersteunt geen pushmeldingen. Installeer de app op je telefoon.';
+    $('#btn-push-enable').style.display = 'none';
+    return;
+  }
+  const perm = Notification.permission;
+  el.textContent =
+    perm === 'granted' ? 'Meldingen staan aan op dit apparaat.' :
+    perm === 'denied' ? 'Meldingen zijn geblokkeerd in de browserinstellingen.' :
+    'Meldingen staan uit.';
+}
+
+async function enablePush() {
+  const el = $('#push-status');
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') {
+      el.textContent = 'Toestemming niet gegeven.';
+      return;
+    }
+    const { publicKey } = await api('/push/vapid');
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey)
+    });
+    await api('/push/subscribe', { method: 'POST', body: { subscription: sub } });
+    el.textContent = 'Meldingen staan aan op dit apparaat. 👍';
+  } catch (err) {
+    el.textContent = 'Meldingen aanzetten lukte niet. Werkt het beste als de app op je startscherm staat.';
+  }
+}
+
+$('#btn-push-enable').addEventListener('click', enablePush);
+$('#btn-push-test').addEventListener('click', async () => {
+  try {
+    await api('/push/test', { method: 'POST' });
+    $('#push-status').textContent = 'Testmelding verstuurd — check je telefoon.';
+  } catch (err) {
+    $('#push-status').textContent = err.message || 'Testmelding lukte niet.';
+  }
+});
+
 // ---------- Drang (module "Porno als coping") ----------
 
 const OUTCOME_LABEL = { gezakt: 'gezakt', gelijk: 'gelijk gebleven', hoger: 'hoger geworden' };
@@ -564,6 +729,8 @@ async function loadSettings() {
   f.stt.checked = settings.stt;
   f.darkMode.value = settings.darkMode || 'auto';
   f.preferences.value = settings.preferences || '';
+  if (f.briefingTime) f.briefingTime.value = settings.briefingTime || '08:00';
+  if (f.briefingEnabled) f.briefingEnabled.checked = settings.briefingEnabled !== false;
   applyTheme();
   setGreeting();
   setupSpeech();
@@ -579,14 +746,16 @@ $('#settingsform').addEventListener('submit', async (e) => {
       tts: f.tts.checked,
       stt: f.stt.checked,
       darkMode: f.darkMode.value,
-      preferences: f.preferences.value
+      preferences: f.preferences.value,
+      briefingTime: f.briefingTime.value,
+      briefingEnabled: f.briefingEnabled.checked
     }
   });
   state.settings = settings;
   applyTheme();
   setGreeting();
   setupSpeech();
-  showView('chat');
+  showView('briefing');
 });
 
 async function loadSources() {
@@ -610,9 +779,34 @@ function escapeHtml(str) {
 
 // ---------- Init ----------
 
+// Service worker registreren (nodig voor PWA + pushmeldingen).
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+}
+
 (async function init() {
   document.documentElement.dataset.theme = 'auto';
   await loadSettings();
   await restoreSession();
   autosize();
+
+  const params = new URLSearchParams(location.search);
+
+  // Terugkomst van Google-koppeling.
+  const agenda = params.get('agenda');
+  if (agenda === 'gekoppeld') {
+    $$('.tab').forEach((t) => t.classList.remove('active'));
+    $$('.view').forEach((v) => v.classList.add('hidden'));
+    $('#view-settings').classList.remove('hidden');
+    loadSources();
+    loadAgenda();
+    loadPushStatus();
+  }
+
+  // Diep-link naar een view (bv. vanuit de pushmelding: ?view=briefing).
+  const view = params.get('view');
+  if (view && $(`#view-${view}`)) showView(view);
+
+  // Query params opruimen uit de adresbalk.
+  if (agenda || view) history.replaceState(null, '', location.pathname);
 })();

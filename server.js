@@ -8,6 +8,10 @@ const { assess } = require('./src/safety');
 const { chatReply, summarizeSession } = require('./src/openai');
 const { SOURCES } = require('./src/sources');
 const coping = require('./src/coping');
+const gcal = require('./src/connectors/google-calendar');
+const briefing = require('./src/briefing');
+const push = require('./src/push');
+const scheduler = require('./src/scheduler');
 
 const app = express();
 const PORT = process.env.PORT || 3100;
@@ -243,6 +247,117 @@ function publicFlows() {
   return { emotions: EMOTIONS, triggers: TRIGGERS, interventions: INTERVENTIONS };
 }
 
+// ---------- Agenda (Google Calendar-connector) ----------
+
+app.get('/api/google/status', (req, res) => {
+  const db = load();
+  res.json({
+    configured: gcal.isConfigured(),
+    connected: gcal.isConnected(),
+    email: db.google.email,
+    calendars: db.google.calendars
+  });
+});
+
+// Start de koppeling: geef de Google-inlog-URL terug.
+app.get('/api/google/connect', (req, res) => {
+  if (!gcal.isConfigured()) {
+    return res.status(503).json({ error: 'Google-koppeling niet ingesteld. Zet GOOGLE_CLIENT_ID en GOOGLE_CLIENT_SECRET in .env.' });
+  }
+  res.json({ url: gcal.authUrl() });
+});
+
+// Terugkoppeling van Google: code omruilen, agenda's synchroniseren, terug naar app.
+app.get('/api/google/callback', async (req, res) => {
+  const { code, error } = req.query;
+  if (error) return res.redirect('/?agenda=geweigerd');
+  if (!code) return res.redirect('/?agenda=fout');
+  try {
+    await gcal.exchangeCode(code);
+    await gcal.syncCalendars();
+  } catch (err) {
+    console.error('Google callback fout:', err.message);
+    return res.redirect('/?agenda=fout');
+  }
+  res.redirect('/?agenda=gekoppeld');
+});
+
+app.post('/api/google/disconnect', (req, res) => {
+  gcal.disconnect();
+  res.json({ ok: true });
+});
+
+app.get('/api/google/calendars', async (req, res) => {
+  try {
+    const calendars = await gcal.syncCalendars();
+    res.json({ calendars });
+  } catch (err) {
+    res.status(502).json({ error: 'Agenda-lijst ophalen mislukt.' });
+  }
+});
+
+app.put('/api/google/calendars', (req, res) => {
+  const db = load();
+  const selected = new Set(Array.isArray(req.body.selected) ? req.body.selected : []);
+  db.google.calendars = db.google.calendars.map((c) => ({ ...c, selected: selected.has(c.id) }));
+  save();
+  res.json({ calendars: db.google.calendars });
+});
+
+// ---------- Ochtendbriefing ----------
+
+app.get('/api/briefing/today', async (req, res) => {
+  let b = briefing.todaysBriefing();
+  if (!b) {
+    try {
+      b = await briefing.generateAndStore();
+    } catch (err) {
+      console.error('Briefing genereren mislukt:', err.message);
+      return res.status(502).json({ error: 'Briefing samenstellen lukte niet.' });
+    }
+  }
+  res.json({ briefing: b });
+});
+
+// Vers genereren (bv. knop "ververs" of test).
+app.post('/api/briefing/generate', async (req, res) => {
+  try {
+    const b = await scheduler.runBriefing('handmatig');
+    res.json({ briefing: b });
+  } catch (err) {
+    console.error('Briefing genereren mislukt:', err.message);
+    res.status(502).json({ error: 'Briefing samenstellen lukte niet.' });
+  }
+});
+
+// ---------- Web-push ----------
+
+app.get('/api/push/vapid', (req, res) => {
+  res.json({ publicKey: push.publicKey() });
+});
+
+app.post('/api/push/subscribe', (req, res) => {
+  const ok = push.saveSubscription(req.body && req.body.subscription);
+  if (!ok) return res.status(400).json({ error: 'Ongeldige subscription.' });
+  res.json({ ok: true });
+});
+
+app.post('/api/push/unsubscribe', (req, res) => {
+  if (req.body && req.body.endpoint) push.removeSubscription(req.body.endpoint);
+  res.json({ ok: true });
+});
+
+// Testmelding, zodat je op de telefoon kunt controleren of het werkt.
+app.post('/api/push/test', async (req, res) => {
+  if (!push.hasSubscriptions()) return res.status(400).json({ error: 'Nog geen telefoon aangemeld voor meldingen.' });
+  try {
+    const result = await push.sendToAll({ title: 'Wim-maatje', body: 'Meldingen werken. 👍', url: '/' });
+    res.json(result);
+  } catch (err) {
+    res.status(502).json({ error: 'Testmelding versturen mislukt.' });
+  }
+});
+
 // ---------- Instellingen & bronnen ----------
 
 app.get('/api/settings', (req, res) => {
@@ -251,12 +366,14 @@ app.get('/api/settings', (req, res) => {
 
 app.put('/api/settings', (req, res) => {
   const db = load();
-  const { name, tts, stt, darkMode, preferences } = req.body;
+  const { name, tts, stt, darkMode, preferences, briefingTime, briefingEnabled } = req.body;
   if (name !== undefined) db.settings.name = String(name).trim() || 'Wim';
   if (tts !== undefined) db.settings.tts = Boolean(tts);
   if (stt !== undefined) db.settings.stt = Boolean(stt);
   if (darkMode !== undefined) db.settings.darkMode = darkMode;
   if (preferences !== undefined) db.settings.preferences = String(preferences).trim();
+  if (briefingTime !== undefined && /^\d{1,2}:\d{2}$/.test(briefingTime)) db.settings.briefingTime = briefingTime;
+  if (briefingEnabled !== undefined) db.settings.briefingEnabled = Boolean(briefingEnabled);
   save();
   res.json({ settings: db.settings });
 });
@@ -270,4 +387,8 @@ app.listen(PORT, () => {
   if (!process.env.OPENAI_API_KEY) {
     console.warn('Let op: geen OPENAI_API_KEY gevonden — chat werkt pas na het instellen van de key in .env');
   }
+  if (!gcal.isConfigured()) {
+    console.warn('Let op: geen Google-credentials — agenda-koppeling werkt pas na GOOGLE_CLIENT_ID/SECRET in .env');
+  }
+  scheduler.start();
 });

@@ -218,6 +218,28 @@ main {
 
 .coping-patterns .meta { margin-bottom: 4px; }
 
+/* ---------- Briefing ---------- */
+
+.briefing-text {
+  white-space: pre-wrap;
+  line-height: 1.55;
+  font-size: 0.95rem;
+}
+
+.briefing-body { margin-bottom: 10px; }
+
+.briefing-body .actions,
+.card .actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+#agenda-calendars { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+#agenda-calendars .btn { margin-top: 8px; align-self: flex-start; }
+
 /* ---------- Invoer ---------- */
 
 .inputrow {

@@ -21,6 +21,7 @@ Zonder API-key start de app gewoon; alleen de chat geeft dan een nette melding. 
 - **Dagstatus**: energie, stress, stemming, focus (1–10) per dag
 - **Doelen**: titel, categorie, status, check-ins; de assistent komt er vanzelf op terug
 - **Drang / Porno als coping**: intent-detectie + knop "Porno-drang hulp", vaste flow (reguleren → labelen → functie → één alternatief → evalueren), episode-logging als patroon en patroonoverzicht — zie [docs/coping-module.md](docs/coping-module.md)
+- **Agenda + ochtendbriefing**: Google-agenda koppelen (alleen lezen), één rustig dagoverzicht per dag in het tabblad *Vandaag*, met optionele pushmelding op je telefoon (PWA). Eén moment per dag, verder stil — zie [docs/agenda-connector.md](docs/agenda-connector.md)
 - **Geheugen**: per afgerond gesprek een korte samenvatting + memory items, gebruikt in de context van volgende gesprekken
 - **Geschiedenis**: eerdere gesprekken teruglezen
 - **Veiligheid**: detectie van zorgwekkende signalen → kalme reactie + support card (113, huisarts/POH-GGZ)

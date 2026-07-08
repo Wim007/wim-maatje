@@ -1,0 +1,13 @@
+{
+  "name": "Wim-maatje",
+  "short_name": "Wim-maatje",
+  "description": "Persoonlijk regulatie- en structuurmaatje",
+  "start_url": "/?view=briefing",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f5f1",
+  "theme_color": "#4a6151",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
