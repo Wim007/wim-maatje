@@ -3,6 +3,7 @@
 const OpenAI = require('openai');
 const { SYSTEM_PROMPT } = require('./systemPrompt');
 const { SAFETY_INSTRUCTION } = require('./safety');
+const { COPING_PROMPT, COPING_OFFER_HINT, patternsSummary } = require('./coping');
 
 const MODEL = process.env.OPENAI_MODEL || 'gpt-5.4-mini';
 const MAX_HISTORY = 20; // recente berichten van de huidige sessie
@@ -15,7 +16,7 @@ function getClient() {
 }
 
 // Compact dynamisch contextblok: naam, tijd, actieve doelen, geheugen, vorige samenvatting.
-function buildContextBlock(db, safetyLevel) {
+function buildContextBlock(db, safetyLevel, copingState) {
   const parts = [];
   const now = new Date();
   const uur = now.getHours();
@@ -58,12 +59,22 @@ function buildContextBlock(db, safetyLevel) {
     );
   }
 
+  // Module "Porno als coping": actief = volledige flowinstructies,
+  // mogelijk = alleen een zachte hint om de hulp aan te bieden.
+  if (copingState === 'actief') {
+    parts.push(COPING_PROMPT);
+    const patterns = patternsSummary(db.coping_episodes || []);
+    if (patterns) parts.push('Bekende drang-patronen: ' + patterns);
+  } else if (copingState === 'mogelijk') {
+    parts.push(COPING_OFFER_HINT);
+  }
+
   if (safetyLevel) parts.push(SAFETY_INSTRUCTION[safetyLevel]);
 
   return parts.join('\n\n');
 }
 
-async function chatReply({ db, sessionMessages, safetyLevel }) {
+async function chatReply({ db, sessionMessages, safetyLevel, copingState }) {
   const openai = getClient();
   if (!openai) {
     const err = new Error('Geen OPENAI_API_KEY ingesteld. Zet de key in .env en herstart de server.');
@@ -81,7 +92,7 @@ async function chatReply({ db, sessionMessages, safetyLevel }) {
     max_completion_tokens: 1024,
     messages: [
       // Vaste prompt eerst: OpenAI's automatische prompt caching hergebruikt de stabiele prefix
-      { role: 'system', content: SYSTEM_PROMPT + '\n\n' + buildContextBlock(db, safetyLevel) },
+      { role: 'system', content: SYSTEM_PROMPT + '\n\n' + buildContextBlock(db, safetyLevel, copingState) },
       ...history
     ]
   });
@@ -132,7 +143,9 @@ async function summarizeSession(sessionMessages) {
       {
         role: 'user',
         content:
-          'Vat dit coachgesprek samen voor het geheugen van de assistent. Wees feitelijk en kort.\n\n' +
+          'Vat dit coachgesprek samen voor het geheugen van de assistent. Wees feitelijk en kort. ' +
+          'Neem nooit seksuele of pornografische details op; beschrijf drang-episodes alleen als patroon ' +
+          '(bv. "drang-episode, trigger afwijzing, koud water hielp").\n\n' +
           transcript
       }
     ]

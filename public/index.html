@@ -31,6 +31,7 @@
         <div class="messages" id="messages" aria-live="polite"></div>
 
         <div class="chips" id="chips">
+          <button class="chip urgent" data-msg="Porno-drang hulp. Ik voel nu drang.">Porno-drang hulp</button>
           <button class="chip" data-msg="Ik ben wakker geworden en kan niet meer slapen.">Ik ben wakker</button>
           <button class="chip" data-msg="Ik zit vast en kom niet verder.">Ik zit vast</button>
           <button class="chip" data-msg="Help me dit afronden, ik blijf hangen.">Help me afronden</button>
@@ -88,6 +89,47 @@
         <div class="card">
           <h3>Laatste dagen</h3>
           <div id="checkin-list" class="list"></div>
+        </div>
+      </section>
+
+      <!-- DRANG (module "Porno als coping") -->
+      <section class="view hidden" id="view-coping">
+        <h2>Drang</h2>
+        <div class="card">
+          <p class="coping-intro">Drang is een golf: hij komt op en zakt weer. Hier log je episodes als patroon — geen details, alleen wat je verder helpt.</p>
+          <button class="btn" id="btn-coping-help">Porno-drang hulp — nu</button>
+        </div>
+
+        <form class="card form" id="copingform">
+          <h3>Episode loggen</h3>
+          <div class="grid2">
+            <label>Drang vooraf (0–10) <input type="number" name="urgeBefore" min="0" max="10" required /></label>
+            <label>Drang na afloop (0–10) <input type="number" name="urgeAfter" min="0" max="10" /></label>
+            <label>Emotie <select name="emotion" id="coping-emotion"></select></label>
+            <label>Trigger <select name="trigger" id="coping-trigger"></select></label>
+            <label>Wat heb je gedaan? <select name="intervention" id="coping-intervention"></select></label>
+            <label>Effect
+              <select name="outcome">
+                <option value="">— nog niet bekend —</option>
+                <option value="gezakt">Drang gezakt</option>
+                <option value="gelijk">Gelijk gebleven</option>
+                <option value="hoger">Hoger geworden</option>
+              </select>
+            </label>
+          </div>
+          <label class="checkline"><input type="checkbox" name="relapse" /> Toch gekeken (terugval — telt als data, niet als falen)</label>
+          <label>Notitie (1 zin, geen details) <input type="text" name="note" maxlength="140" placeholder="bv. na een rotbericht, alleen thuis" /></label>
+          <button type="submit" class="btn">Opslaan</button>
+        </form>
+
+        <div class="card">
+          <h3>Patronen (laatste 90 dagen)</h3>
+          <div id="coping-patterns" class="coping-patterns"></div>
+        </div>
+
+        <div class="card">
+          <h3>Laatste episodes</h3>
+          <div id="coping-list" class="list"></div>
         </div>
       </section>
 
@@ -152,6 +194,7 @@
       <button class="tab active" data-view="chat">Chat</button>
       <button class="tab" data-view="sleep">Slaap</button>
       <button class="tab" data-view="day">Dag</button>
+      <button class="tab" data-view="coping">Drang</button>
       <button class="tab" data-view="goals">Doelen</button>
       <button class="tab" data-view="history">Historie</button>
     </nav>

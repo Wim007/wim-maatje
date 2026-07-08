@@ -203,6 +203,21 @@ main {
 
 .chip:hover { background: var(--accent-soft); border-color: var(--accent); }
 
+/* Directe-hulp chip: iets nadrukkelijker, maar niet alarmerend. */
+.chip.urgent {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  font-weight: 600;
+}
+
+.coping-intro {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0 0 12px;
+}
+
+.coping-patterns .meta { margin-bottom: 4px; }
+
 /* ---------- Invoer ---------- */
 
 .inputrow {
