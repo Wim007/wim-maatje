@@ -7,6 +7,7 @@ const { load, save, id, today } = require('./src/store');
 const { assess } = require('./src/safety');
 const { chatReply, summarizeSession } = require('./src/openai');
 const { SOURCES } = require('./src/sources');
+const coping = require('./src/coping');
 
 const app = express();
 const PORT = process.env.PORT || 3100;
@@ -31,12 +32,18 @@ app.post('/api/chat', async (req, res) => {
   const recentUserMessages = db.messages.filter((m) => m.role === 'user').map((m) => m.content);
   const safetyLevel = assess(text, recentUserMessages);
 
+  // Module "Porno als coping": expliciete drang activeert de module voor
+  // de rest van de sessie; zachtere signalen geven alleen een aanbied-hint.
+  const copingIntent = coping.detect(text);
+  if (copingIntent === 'direct') session.copingMode = true;
+  const copingState = session.copingMode ? 'actief' : copingIntent === 'mogelijk' ? 'mogelijk' : null;
+
   db.messages.push({ id: id(), sessionId: session.id, role: 'user', content: text, ts: new Date().toISOString() });
 
   const sessionMessages = db.messages.filter((m) => m.sessionId === session.id);
 
   try {
-    const reply = await chatReply({ db, sessionMessages, safetyLevel });
+    const reply = await chatReply({ db, sessionMessages, safetyLevel, copingState });
     db.messages.push({ id: id(), sessionId: session.id, role: 'assistant', content: reply, ts: new Date().toISOString() });
     save();
     res.json({ sessionId: session.id, reply, safety: safetyLevel });
@@ -194,6 +201,47 @@ app.post('/api/checkins', (req, res) => {
   save();
   res.json({ checkin });
 });
+
+// ---------- Drang (module "Porno als coping") ----------
+// Alleen patroondata: scores, categorieën en een korte notitie.
+// Geen expliciete content — sanitizeEpisode dwingt dat af.
+
+app.get('/api/coping/episodes', (req, res) => {
+  res.json({ episodes: load().coping_episodes.slice(-50), flows: publicFlows() });
+});
+
+app.post('/api/coping/episodes', (req, res) => {
+  const db = load();
+  const episode = {
+    id: id(),
+    ts: new Date().toISOString(),
+    date: today(),
+    ...coping.sanitizeEpisode(req.body)
+  };
+  db.coping_episodes.push(episode);
+  save();
+  res.json({ episode });
+});
+
+// Naderhand bijwerken (bv. drang-na of terugval invullen).
+app.patch('/api/coping/episodes/:id', (req, res) => {
+  const db = load();
+  const episode = db.coping_episodes.find((e) => e.id === req.params.id);
+  if (!episode) return res.status(404).json({ error: 'Episode niet gevonden.' });
+  const clean = coping.sanitizeEpisode({ ...episode, ...req.body });
+  Object.assign(episode, clean);
+  save();
+  res.json({ episode });
+});
+
+app.get('/api/coping/patterns', (req, res) => {
+  res.json({ patterns: coping.buildPatterns(load().coping_episodes) });
+});
+
+function publicFlows() {
+  const { EMOTIONS, TRIGGERS, INTERVENTIONS } = coping.flows;
+  return { emotions: EMOTIONS, triggers: TRIGGERS, interventions: INTERVENTIONS };
+}
 
 // ---------- Instellingen & bronnen ----------
 

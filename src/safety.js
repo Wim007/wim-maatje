@@ -12,7 +12,11 @@ const ACUTE_PATTERNS = [
   /(een )?einde (aan|eraan) (willen )?maken/i,
   /dood (willen|wil)/i,
   /geen uitweg/i,
-  /iedereen beter af zonder mij/i
+  /iedereen beter af zonder mij/i,
+  /zelfbeschadig/i,
+  /automutilat/i,
+  /mezelf pijn (doen|gedaan|willen doen)/i,
+  /(in )?(mezelf|mijn arm(en)?) snijden/i
 ];
 
 const ELEVATED_PATTERNS = [
@@ -23,7 +27,10 @@ const ELEVATED_PATTERNS = [
   /bijna niet geslapen/i,
   /al (dagen|nachten) (niet|nauwelijks) (geslapen|slapen)/i,
   /stress.*(10|tien)\b/i,
-  /instort|stort in/i
+  /instort|stort in/i,
+  /dissociat|dissocieer/i,
+  /alles (voelt|lijkt) onwerkelijk/i,
+  /(voel|ben) (me |mezelf )?(losgekoppeld|niet echt|ver weg van alles)/i
 ];
 
 function scanMessage(text) {

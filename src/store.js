@@ -21,7 +21,8 @@ const EMPTY_DB = {
   goals: [],          // {id, title, category, status, startDate, notes, lastCheckin}
   memory_items: [],   // {id, date, text, sessionId}
   sleep_logs: [],     // {id, date, bedtime, sleepHours, wokeNight, wakeTime, note}
-  daily_checkins: []  // {id, date, energy, stress, mood, focus}
+  daily_checkins: [], // {id, date, energy, stress, mood, focus}
+  coping_episodes: [] // {id, ts, date, urgeBefore, urgeAfter, emotion, trigger, intervention, outcome, relapse, note}
 };
 
 let db = null;

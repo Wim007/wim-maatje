@@ -50,6 +50,7 @@ function showView(name) {
   $$('.tab').forEach((t) => t.classList.toggle('active', t.dataset.view === name));
   if (name === 'sleep') loadSleep();
   if (name === 'day') loadCheckins();
+  if (name === 'coping') loadCoping();
   if (name === 'goals') loadGoals();
   if (name === 'history') loadSessions();
 }
@@ -351,6 +352,93 @@ $('#dayform').addEventListener('submit', async (e) => {
     body: { energy: f.energy.value, stress: f.stress.value, mood: f.mood.value, focus: f.focus.value }
   });
   loadCheckins();
+});
+
+// ---------- Drang (module "Porno als coping") ----------
+
+const OUTCOME_LABEL = { gezakt: 'gezakt', gelijk: 'gelijk gebleven', hoger: 'hoger geworden' };
+
+// Directe hulp: naar de chat en de flow starten.
+$('#btn-coping-help').addEventListener('click', () => {
+  showView('chat');
+  sendMessage('Porno-drang hulp. Ik voel nu drang.');
+});
+
+function fillSelect(sel, options) {
+  if (sel.children.length) return;
+  for (const opt of options) {
+    const o = document.createElement('option');
+    o.value = typeof opt === 'string' ? opt : opt.id;
+    o.textContent = typeof opt === 'string' ? opt : opt.label;
+    sel.appendChild(o);
+  }
+}
+
+async function loadCoping() {
+  const [{ episodes, flows }, { patterns }] = await Promise.all([
+    api('/coping/episodes'),
+    api('/coping/patterns')
+  ]);
+
+  fillSelect($('#coping-emotion'), flows.emotions);
+  fillSelect($('#coping-trigger'), flows.triggers);
+  fillSelect($('#coping-intervention'), flows.interventions);
+
+  // Patroonoverzicht
+  const box = $('#coping-patterns');
+  if (!patterns.total) {
+    box.innerHTML = '<p class="hint">Nog geen episodes gelogd. Eén log per episode is genoeg om patronen te zien.</p>';
+  } else {
+    const line = (label, items) =>
+      items.length ? `<div class="meta"><strong>${label}:</strong> ${items.map((i) => `${escapeHtml(i.key)} (${i.count}×)`).join(' · ')}</div>` : '';
+    box.innerHTML =
+      `<div class="meta"><strong>Episodes:</strong> ${patterns.total} · <strong>Terugval:</strong> ${patterns.relapses}×</div>` +
+      line('Triggers', patterns.topTriggers) +
+      line('Emoties', patterns.topEmotions) +
+      line('Momenten', patterns.topMoments) +
+      (patterns.helpfulInterventions.length
+        ? `<div class="meta"><strong>Wat helpt:</strong> ${patterns.helpfulInterventions
+            .map((h) => `${escapeHtml(h.intervention)} (${h.gezaktPct}% gezakt)`)
+            .join(' · ')}</div>`
+        : '');
+  }
+
+  // Laatste episodes
+  const list = $('#coping-list');
+  list.innerHTML = '';
+  const interventionLabel = (idVal) => flows.interventions.find((i) => i.id === idVal)?.label || idVal;
+  [...episodes].reverse().slice(0, 10).forEach((e) => {
+    const el = document.createElement('div');
+    el.className = 'list-item';
+    el.innerHTML =
+      `<span class="title">${fmtDate(e.date)}</span>` +
+      (e.relapse ? '<span class="badge">terugval</span>' : '') +
+      `<div class="meta">Drang ${e.urgeBefore ?? '–'} → ${e.urgeAfter ?? '–'} · ${escapeHtml(e.emotion)} · trigger: ${escapeHtml(e.trigger)}</div>` +
+      `<div class="meta">${escapeHtml(interventionLabel(e.intervention))}${e.outcome ? ` · ${OUTCOME_LABEL[e.outcome]}` : ''}</div>` +
+      (e.note ? `<div class="meta">${escapeHtml(e.note)}</div>` : '');
+    list.appendChild(el);
+  });
+  if (!episodes.length) list.innerHTML = '<p class="hint">Nog geen episodes.</p>';
+}
+
+$('#copingform').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  await api('/coping/episodes', {
+    method: 'POST',
+    body: {
+      urgeBefore: f.urgeBefore.value,
+      urgeAfter: f.urgeAfter.value,
+      emotion: f.emotion.value,
+      trigger: f.trigger.value,
+      intervention: f.intervention.value,
+      outcome: f.outcome.value || null,
+      relapse: f.relapse.checked,
+      note: f.note.value
+    }
+  });
+  f.reset();
+  loadCoping();
 });
 
 // ---------- Doelen ----------

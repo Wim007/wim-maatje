@@ -20,6 +20,7 @@ Zonder API-key start de app gewoon; alleen de chat geeft dan een nette melding. 
 - **Slaaplog**: bedtijd, geschatte slaap, nachtelijk wakker, opstatijd, notitie + weekoverzicht
 - **Dagstatus**: energie, stress, stemming, focus (1–10) per dag
 - **Doelen**: titel, categorie, status, check-ins; de assistent komt er vanzelf op terug
+- **Drang / Porno als coping**: intent-detectie + knop "Porno-drang hulp", vaste flow (reguleren → labelen → functie → één alternatief → evalueren), episode-logging als patroon en patroonoverzicht — zie [docs/coping-module.md](docs/coping-module.md)
 - **Geheugen**: per afgerond gesprek een korte samenvatting + memory items, gebruikt in de context van volgende gesprekken
 - **Geschiedenis**: eerdere gesprekken teruglezen
 - **Veiligheid**: detectie van zorgwekkende signalen → kalme reactie + support card (113, huisarts/POH-GGZ)
@@ -35,7 +36,8 @@ wim-maatje/
 │   ├── systemPrompt.js  # Vaste system prompt (gedragsregels Wim-maatje)
 │   ├── safety.js        # Safety-detectie (acuut / verhoogd)
 │   ├── sources.js       # Goedgekeurde bronnen
-│   └── store.js         # JSON-opslag (data/db.json, atomair schrijven)
+│   ├── store.js         # JSON-opslag (data/db.json, atomair schrijven)
+│   └── coping/          # Module "Porno als coping" (flows, prompt, intents, logging)
 ├── public/              # Frontend (vanilla HTML/CSS/JS)
 │   ├── index.html
 │   ├── style.css
@@ -54,6 +56,7 @@ wim-maatje/
 | `memory_items` | id, date, text, sessionId |
 | `sleep_logs` | id, date, bedtime, sleepHours, wokeNight, wakeTime, note |
 | `daily_checkins` | id, date, energy, stress, mood, focus |
+| `coping_episodes` | id, ts, date, urgeBefore, urgeAfter, emotion, trigger, intervention, outcome, relapse, note |
 
 ### Contextopbouw (compact, niet de ruwe historie)
 
