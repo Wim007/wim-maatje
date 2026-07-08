@@ -4,7 +4,7 @@ const OpenAI = require('openai');
 const { SYSTEM_PROMPT } = require('./systemPrompt');
 const { SAFETY_INSTRUCTION } = require('./safety');
 
-const MODEL = process.env.OPENAI_MODEL || 'gpt-4o';
+const MODEL = process.env.OPENAI_MODEL || 'gpt-5.4-mini';
 const MAX_HISTORY = 20; // recente berichten van de huidige sessie
 
 let client = null;
