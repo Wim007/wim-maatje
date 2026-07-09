@@ -319,6 +319,12 @@ app.get('/api/briefing/today', async (req, res) => {
   res.json({ briefing: b });
 });
 
+// Briefing als gelezen markeren -> stopt de herinneringen voor vandaag.
+app.post('/api/briefing/acknowledge', (req, res) => {
+  const b = briefing.acknowledgeToday();
+  res.json({ ok: true, acknowledged: Boolean(b && b.acknowledged) });
+});
+
 // Vers genereren (bv. knop "ververs" of test).
 app.post('/api/briefing/generate', async (req, res) => {
   try {
@@ -366,7 +372,7 @@ app.get('/api/settings', (req, res) => {
 
 app.put('/api/settings', (req, res) => {
   const db = load();
-  const { name, tts, stt, darkMode, preferences, briefingTime, briefingEnabled } = req.body;
+  const { name, tts, stt, darkMode, preferences, briefingTime, briefingEnabled, nagUntil, nagIntervalMin } = req.body;
   if (name !== undefined) db.settings.name = String(name).trim() || 'Wim';
   if (tts !== undefined) db.settings.tts = Boolean(tts);
   if (stt !== undefined) db.settings.stt = Boolean(stt);
@@ -374,6 +380,8 @@ app.put('/api/settings', (req, res) => {
   if (preferences !== undefined) db.settings.preferences = String(preferences).trim();
   if (briefingTime !== undefined && /^\d{1,2}:\d{2}$/.test(briefingTime)) db.settings.briefingTime = briefingTime;
   if (briefingEnabled !== undefined) db.settings.briefingEnabled = Boolean(briefingEnabled);
+  if (nagUntil !== undefined && /^\d{1,2}:\d{2}$/.test(nagUntil)) db.settings.nagUntil = nagUntil;
+  if (nagIntervalMin !== undefined) db.settings.nagIntervalMin = Math.max(1, Math.min(120, Number(nagIntervalMin) || 20));
   save();
   res.json({ settings: db.settings });
 });

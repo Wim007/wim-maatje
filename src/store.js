@@ -18,7 +18,9 @@ const EMPTY_DB = {
     darkMode: 'auto', // 'auto' | 'licht' | 'donker'
     preferences: 'Kort en nuchter. Geen zweverigheid.',
     briefingTime: '08:00',  // HH:MM, moment van de ochtendbriefing
-    briefingEnabled: true
+    briefingEnabled: true,
+    nagUntil: '11:00',      // tot dit tijdstip blijft de melding terugkomen
+    nagIntervalMin: 20      // om de zoveel minuten opnieuw, tot je 'm hebt gelezen
   },
   sessions: [],       // {id, date, startedAt, closedAt, summary}
   messages: [],       // {id, sessionId, role, content, ts}
@@ -34,8 +36,8 @@ const EMPTY_DB = {
   },
   push_subscriptions: [], // Web-push subscriptions van de telefoon(s)
   vapid: null,        // {publicKey, privateKey} — één keer gegenereerd
-  briefings: [],      // {id, date, generatedAt, text, items}
-  briefing_state: { lastRunDate: null } // borgt: max één automatische briefing per dag
+  briefings: [],      // {id, date, generatedAt, text, items, acknowledged}
+  briefing_state: { lastRunDate: null, lastNudgeAt: null } // borgt 1 briefing/dag + herinneringsritme
 };
 
 let db = null;

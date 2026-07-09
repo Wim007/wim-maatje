@@ -33,6 +33,7 @@
             <p class="hint">Briefing wordt geladen…</p>
           </div>
           <div class="actions">
+            <button class="btn hidden" id="btn-briefing-ack">Gelezen — stop herinneringen</button>
             <button class="linkbtn" id="btn-briefing-refresh">Ververs</button>
             <span class="hint" id="briefing-meta"></span>
           </div>
@@ -204,6 +205,8 @@
           <label>Korte voorkeuren <textarea name="preferences" rows="2" placeholder="bv. Kort en nuchter."></textarea></label>
           <label class="checkline"><input type="checkbox" name="briefingEnabled" /> Ochtendbriefing aan</label>
           <label>Tijd van de ochtendbriefing <input type="time" name="briefingTime" /></label>
+          <label>Herinneringen tot <input type="time" name="nagUntil" /></label>
+          <label>Herinnering elke (minuten) <input type="number" name="nagIntervalMin" min="1" max="120" step="1" /></label>
           <button type="submit" class="btn">Opslaan</button>
         </form>
 

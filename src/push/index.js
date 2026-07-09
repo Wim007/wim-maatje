@@ -44,10 +44,11 @@ function removeSubscription(endpoint) {
 }
 
 // Verstuur een melding naar alle telefoons; ruimt dode subscriptions op.
-async function sendToAll({ title, body, url = '/' }) {
+// Extra opties (tag/requireInteraction/renotify) gaan mee naar de service worker.
+async function sendToAll({ title, body, url = '/', tag, requireInteraction, renotify }) {
   ensureVapid();
   const db = load();
-  const payload = JSON.stringify({ title, body, url });
+  const payload = JSON.stringify({ title, body, url, tag, requireInteraction, renotify });
   const dead = [];
 
   await Promise.all(
