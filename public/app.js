@@ -170,12 +170,30 @@ $('#btn-close-session').addEventListener('click', async () => {
   localStorage.removeItem('wm_sessionId');
 });
 
+// Nieuw gesprek starten: huidige leegmaken, oude op de achtergrond afronden (samenvatten).
+$('#btn-new-session').addEventListener('click', () => {
+  const old = state.sessionId;
+  state.sessionId = null;
+  localStorage.removeItem('wm_sessionId');
+  messagesEl.innerHTML = '';
+  $('#chat-hint').textContent = '';
+  $('#support-card').classList.add('hidden');
+  addWelcome();
+  inputEl.focus();
+  if (old) api(`/sessions/${old}/close`, { method: 'POST' }).catch(() => {});
+});
+
 // Herstel lopend gesprek bij laden
 async function restoreSession() {
   if (!state.sessionId) return addWelcome();
   try {
     const data = await api(`/sessions/${state.sessionId}`);
-    if (data.session.closedAt) {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    // Nieuwe dag: rond het gesprek van gisteren af (voor de samenvatting) en start vers.
+    if (data.session.closedAt || data.session.date !== todayStr) {
+      if (!data.session.closedAt) {
+        api(`/sessions/${state.sessionId}/close`, { method: 'POST' }).catch(() => {});
+      }
       state.sessionId = null;
       localStorage.removeItem('wm_sessionId');
       return addWelcome();
@@ -259,20 +277,28 @@ if ('speechSynthesis' in window) speechSynthesis.getVoices();
 
 // ---------- Slaap ----------
 
-async function loadSleep() {
+let sleepLogs = [];
+
+// Vult het slaapformulier met de log van 'date', of maakt het leeg als er
+// nog geen log voor die dag is (zodat je nooit per ongeluk een andere dag overschrijft).
+function fillSleepForm(date) {
+  const form = $('#sleepform');
+  const log = sleepLogs.find((l) => l.date === date);
+  form.bedtime.value = log?.bedtime || '';
+  form.sleepHours.value = log?.sleepHours ?? '';
+  form.wokeNight.checked = Boolean(log?.wokeNight);
+  form.wakeTime.value = log?.wakeTime || '';
+  form.note.value = log?.note || '';
+}
+
+async function loadSleep(showDate) {
   const { logs } = await api('/sleep');
+  sleepLogs = logs;
   const form = $('#sleepform');
   const todayStr = new Date().toISOString().slice(0, 10);
-  form.date.value = form.date.value || todayStr;
-
-  const existing = logs.find((l) => l.date === form.date.value);
-  if (existing) {
-    form.bedtime.value = existing.bedtime || '';
-    form.sleepHours.value = existing.sleepHours ?? '';
-    form.wokeNight.checked = existing.wokeNight;
-    form.wakeTime.value = existing.wakeTime || '';
-    form.note.value = existing.note || '';
-  }
+  // Standaard op vandaag; velden passen bij de getoonde datum.
+  form.date.value = showDate || todayStr;
+  fillSleepForm(form.date.value);
 
   // Weekoverzicht: laatste 7 dagen
   const bars = $('#weekbars');
@@ -294,6 +320,11 @@ async function loadSleep() {
   }
 }
 
+// Andere datum kiezen -> velden meteen op die dag zetten (of leegmaken).
+$('#sleepform').addEventListener('change', (e) => {
+  if (e.target.name === 'date') fillSleepForm(e.target.value);
+});
+
 $('#sleepform').addEventListener('submit', async (e) => {
   e.preventDefault();
   const f = e.target;
@@ -308,7 +339,7 @@ $('#sleepform').addEventListener('submit', async (e) => {
       note: f.note.value
     }
   });
-  loadSleep();
+  loadSleep(f.date.value); // blijf op de zojuist opgeslagen dag
 });
 
 // ---------- Dagstatus ----------
