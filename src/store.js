@@ -5,7 +5,9 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const DATA_DIR = path.join(__dirname, '..', 'data');
+// Op een host wijs je WIM_DATA_DIR naar een persistente schijf, zodat tokens,
+// meldingen en logs een herstart/deploy overleven (anders raak je ze kwijt).
+const DATA_DIR = process.env.WIM_DATA_DIR || path.join(__dirname, '..', 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 
 const EMPTY_DB = {
