@@ -22,7 +22,11 @@ self.addEventListener('push', (event) => {
       icon: '/icon.svg',
       badge: '/icon.svg',
       data: { url: data.url || '/' },
-      tag: 'wim-maatje-briefing'
+      tag: data.tag || 'wim-maatje-briefing',
+      // Sticky: blijft staan tot je 'm aantikt (voor zover de telefoon dit toestaat).
+      requireInteraction: Boolean(data.requireInteraction),
+      // Herinnering met dezelfde tag laat opnieuw trillen i.p.v. stil vervangen.
+      renotify: Boolean(data.renotify)
     })
   );
 });

@@ -6,8 +6,11 @@ Deze module koppelt je Google-agenda (alleen lezen) en levert één rustig momen
 
 - **Agenda lezen** via Google OAuth (één account). Je kiest zelf welke agenda's meetellen; verjaardag-/feestdagagenda's staan standaard uit.
 - **Ochtendbriefing** (tabblad *Vandaag*): de afspraken van vandaag + waar je aan werkt (actieve doelen), kort en ADHD-proof. Bij een volle dag vat hij samen in plaats van alles op te sommen.
-- **Eén moment per dag**: een scheduler genereert de briefing op het ingestelde tijdstip (standaard 08:00) en stuurt dan één pushmelding. Nooit vaker.
+- **Eén moment per dag**: een scheduler genereert de briefing op het ingestelde tijdstip (standaard 08:00).
+- **Melding-tot-gelezen** (tegen vluchtgedrag): de pushmelding blijft staan en komt elke `nagIntervalMin` minuten (standaard 20) terug, tot je in de app op **"Gelezen"** tikt óf tot `nagUntil` (standaard 11:00) — daarna rust. Wegvegen helpt dus niet; de enige manier om ervan af te komen is 'm lezen. Instelbaar bij **Instellingen → Ochtendbriefing**.
 - **Pushmelding** via een geïnstalleerde PWA op je telefoon (web-push).
+
+> Een telefoon staat niet toe dat een melding écht onwegveegbaar op je scherm blijft (dat blokkeert het besturingssysteem). De melding is daarom "sticky" (blijft in je meldingenbalk staan) en komt telkens terug tot je 'm gelezen hebt — dat bereikt hetzelfde doel.
 
 ## Wat het (nog) niet doet
 

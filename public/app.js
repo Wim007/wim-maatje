@@ -414,8 +414,26 @@ function renderBriefing(briefing) {
   pre.textContent = briefing.text;
   body.appendChild(pre);
   const gen = new Date(briefing.generatedAt);
-  $('#briefing-meta').textContent = `Bijgewerkt ${gen.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}`;
+  const ackBtn = $('#btn-briefing-ack');
+  if (briefing.acknowledged) {
+    ackBtn.classList.add('hidden');
+    $('#briefing-meta').textContent = `Gelezen ✓ · bijgewerkt ${gen.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}`;
+  } else {
+    ackBtn.classList.remove('hidden');
+    $('#briefing-meta').textContent = `Bijgewerkt ${gen.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}`;
+  }
 }
+
+// "Gelezen" -> herinneringen stoppen voor vandaag.
+$('#btn-briefing-ack').addEventListener('click', async () => {
+  try {
+    await api('/briefing/acknowledge', { method: 'POST' });
+    $('#btn-briefing-ack').classList.add('hidden');
+    $('#briefing-meta').textContent = 'Gelezen ✓ — geen herinneringen meer vandaag.';
+  } catch {
+    $('#briefing-meta').textContent = 'Kon niet opslaan, probeer opnieuw.';
+  }
+});
 
 $('#btn-briefing-refresh').addEventListener('click', async () => {
   $('#briefing-body').innerHTML = '<p class="hint">Verversen…</p>';
@@ -762,6 +780,8 @@ async function loadSettings() {
   f.preferences.value = settings.preferences || '';
   if (f.briefingTime) f.briefingTime.value = settings.briefingTime || '08:00';
   if (f.briefingEnabled) f.briefingEnabled.checked = settings.briefingEnabled !== false;
+  if (f.nagUntil) f.nagUntil.value = settings.nagUntil || '11:00';
+  if (f.nagIntervalMin) f.nagIntervalMin.value = settings.nagIntervalMin || 20;
   applyTheme();
   setGreeting();
   setupSpeech();
@@ -779,7 +799,9 @@ $('#settingsform').addEventListener('submit', async (e) => {
       darkMode: f.darkMode.value,
       preferences: f.preferences.value,
       briefingTime: f.briefingTime.value,
-      briefingEnabled: f.briefingEnabled.checked
+      briefingEnabled: f.briefingEnabled.checked,
+      nagUntil: f.nagUntil.value,
+      nagIntervalMin: f.nagIntervalMin.value
     }
   });
   state.settings = settings;

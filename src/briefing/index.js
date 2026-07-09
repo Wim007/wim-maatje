@@ -79,6 +79,7 @@ async function composeBriefing() {
     id: id(),
     date: today(),
     generatedAt: new Date().toISOString(),
+    acknowledged: false, // wordt true zodra Wim op "Gelezen" tikt; stopt de herinneringen
     text,
     items: {
       eventCount: events.length,
@@ -106,4 +107,15 @@ function todaysBriefing() {
   return load().briefings.find((b) => b.date === today()) || null;
 }
 
-module.exports = { composeBriefing, generateAndStore, todaysBriefing };
+// Markeer de briefing van vandaag als gelezen -> stopt de herinneringen.
+function acknowledgeToday() {
+  const db = load();
+  const b = db.briefings.find((x) => x.date === today());
+  if (b) {
+    b.acknowledged = true;
+    save();
+  }
+  return b || null;
+}
+
+module.exports = { composeBriefing, generateAndStore, todaysBriefing, acknowledgeToday };
