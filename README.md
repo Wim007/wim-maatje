@@ -13,6 +13,8 @@ npm start                # → http://localhost:3100
 
 Zonder API-key start de app gewoon; alleen de chat geeft dan een nette melding. Slaaplog, dagstatus, doelen en instellingen werken altijd.
 
+Wil je de **agenda-koppeling** gebruiken? Zet dan ook `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` en `GOOGLE_REDIRECT_URI` in `.env` — zolang die ontbreken toont de app bij *Instellingen → Agenda* de melding "Google-koppeling nog niet ingesteld". De eenmalige setup in de Google Cloud Console staat stap voor stap in [docs/agenda-connector.md](docs/agenda-connector.md).
+
 ## Wat zit erin (MVP)
 
 - **Chat** met Wim-maatje (OpenAI API), quick chips voor de vaste flows: nacht/wakker, ochtend check-in, middag reset, avond afsluiten
